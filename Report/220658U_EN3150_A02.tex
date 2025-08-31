@@ -10,6 +10,7 @@
 \usepackage{amssymb}
 \usepackage{enumitem}
 \usepackage{tikz}
+\usepackage{pgfplots}
 \usepackage[hidelinks]{hyperref}
 
 \newcommand{\extlink}{
@@ -83,14 +84,50 @@
 	\section{Linear Regression}
 
 	\textbf{Question 01} The main reason is the presence of outliers.
+	
+	Based on the inliers, we see that the desired line is an almost horizontal one. To see why a slanted line has been produced instead of a horizontal line, we look at the behavior of the squaring function;
+	\begin{figure}[H]
+		\centering
+		\begin{tikzpicture}
+			\begin{axis}[
+				xmin=0, xmax=2,
+				ymin=0, ymax=4,
+				grid,
+			]
+				\addplot[
+					color=red,
+					domain=0:2,
+				]{x^2};
+				\addplot[
+					color=blue,
+					opacity=0.4,
+					domain=0:2,
+				]{x};
+			\end{axis}
+		\end{tikzpicture}
+		\caption{$y = x^2$}
+	\end{figure}
+	Note that for $|x| < 1$, $x^2 < |x| < 1$, i.e., the squares of numbers less than $1$ are less than the numbers themselves (in absolute value). This means that the squared loss function can remain small enough for prediction errors that are just slightly below $1$, but increases rapidly as it increases beyond $1$.
+	\newline
+
+	In the given situation, even though a horizontal line would give near-zero error for the inliers, the error due to outliers would be very large. It is reasonable then, that a more optimal, i.e., with a lesser mean squared error, could be achieved with a slanted line,with lesser distance between outliers and the corresponding predictions.
+	\newline
+
+	Such a line would increase the gap between the inliers and the corresponding predictions and therefore increase the loss, but \textit{not by too much}, due to the behavior of the square function. Instead, the reduction in the already-large gap between the outliers and the corresponding predictions, \textit{will} cause a \textit{rapid} decrease in the loss, \textit{exceeding} the increase in the loss due to the inliers.
 	\newline
 		
 	\textbf{Question 02} Scheme 1.
-		
-	reason
+	
+	The issue we wish to mitigate is the rapid increase in loss due to outliers, while keeping the loss due to inliers significant, with the intention that a model that better fits the inliers and is not strongly affected by the outliers as described above would be preferred.
 	\newline
 
-	\textbf{Question 03}
+	With Scheme 1, we do not completely neglect the effect of outliers, but significantly scale down their contribution to the loss function, so they do not dominate the loss when the loss due to the inliers is small.
+	\newline
+
+	Scheme 2 is obviously not suitable, as it amplifies the loss from outliers over inliers; minimizing such a function would require the error due to outliers to be significantly reduced, causing more slanted line to be preferred, as described in the previous problem.
+	\newline
+
+	\textbf{Question 03} why not linear regression
 	\newline
 
 	\textbf{Question 05}
