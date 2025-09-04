@@ -11,7 +11,10 @@
 \usepackage{enumitem}
 \usepackage{tikz}
 \usepackage{pgfplots}
+\usepackage{parskip}
 \usepackage[hidelinks]{hyperref}
+
+\setlength{\parskip}{0.75em}
 
 \newcommand{\extlink}{
 	\begin{tikzpicture}[scale=0.1]
@@ -108,68 +111,134 @@
 		\caption{$y = x^2$}
 	\end{figure}
 	Note that for $|x| < 1$, $x^2 < |x| < 1$, i.e., the squares of numbers less than $1$ are less than the numbers themselves (in absolute value). This means that the squared loss function can remain small enough for prediction errors that are just slightly below $1$, but increases rapidly as it increases beyond $1$.
-	\newline
 
 	In the given situation, even though a horizontal line would give near-zero error for the inliers, the error due to outliers would be very large. It is reasonable then, that a more optimal, i.e., with a lesser mean squared error, could be achieved with a slanted line,with lesser distance between outliers and the corresponding predictions.
-	\newline
 
 	Such a line would increase the gap between the inliers and the corresponding predictions and therefore increase the loss, but \textit{not by too much}, due to the behavior of the square function. Instead, the reduction in the already-large gap between the outliers and the corresponding predictions, \textit{will} cause a \textit{rapid} decrease in the loss, \textit{exceeding} the increase in the loss due to the inliers.
-	\newline
-		
+	\medskip
+	
 	\textbf{Question 02} Scheme 1.
 	
 	The issue we wish to mitigate is the rapid increase in loss due to outliers, while keeping the loss due to inliers significant, with the intention that a model that better fits the inliers and is not strongly affected by the outliers as described above would be preferred.
-	\newline
 
 	With Scheme 1, we do not completely neglect the effect of outliers, but significantly scale down their contribution to the loss function, so they do not dominate the loss when the loss due to the inliers is small.
-	\newline
 
 	Scheme 2 is obviously not suitable, as it amplifies the loss from outliers over inliers; minimizing such a function would require the error due to outliers to be significantly reduced, causing more slanted line to be preferred, as described in the previous problem.
-	\newline
-
-	\textbf{Question 03} why not linear regression
-	\newline
+	\medskip
+	
+	\textbf{Question 03} In this case, the prediction to be made is a discrete value rather than a continuous value. Linear regression is more suited for predicting continuously varying values.
+	\medskip
 
 	\textbf{Question 05}
+	\medskip
 
 	\section{Logistic Regression}
 
-	\textbf{Question 02} The following error was encountered.
-	\newline
+	\textbf{Question 02} The following is a snippet of an error that was encountered:
+	\begin{verbatim}
+---------------------------------------------------------------------------
+ValueError                                Traceback (most recent call last)
 
-	\textbf{Question 03} Why sagasolver bad.
-	\newline
+----> logreg.fit(X_train, y_train)
+
+ValueError: could not convert string to float: `Adelie'\end{verbatim}
+
+	The error indicates that not all data items given to \texttt{logreg.train} could be converted to the \texttt{float} data type. Clearly, all data \textit{must} be \textit{numeric} in order to enable the computation of weights and gradients required for logistic regression.
+
+	The error arises from the line \lstinline|X = df_filtered.drop(['class_encoded'], axis=1)| in Listing 1 provided; \texttt{X} is prepared by dropping only the `\texttt{class\_encoded}' column, and therefore will retain the `\texttt{species}', `\texttt{island}', and `\texttt{sex}' columns from \texttt{df\_filtered}, whose entries are strings.
+
+	In our case, `\texttt{species}' is not a feature---it is the label we intend to predict---and therefore mustn't even be contained in \texttt{X} at all.
 	
-	\textbf{Question 04} Classification accuracy
-	\newline
+	We have two options regarding `\texttt{island}' and `\texttt{sex}'; if we  believe the label we are trying to predict, i.e., the species of the penguin, depends on either of these features, then we could form \texttt{X} by replacing these columns with numerically encoded versions of them, or, if we believe they have little or no influence onf the label, we could drop them altogether.
+
+	It is unlikely that the sex of a penguin has any influence on its species, so we will drop this feature entirely. A penguin's habitat (`\texttt{island}'), on the other hand, may be considered as influencing its species, as different species may have adaptations for different habitats. Whether or not to include it as a feature then depends on one's exact requirements. For the purposes of this problem, we will look at both options.
+	
+	Hence, we resolve the error as follows. We drop the `\texttt{species}' and `\texttt{sex}' columns entirely from `\texttt{df\_filtered}' to form \texttt{X\_}. Then, from \texttt{X\_} we form \texttt{X\_1} by one-hot encoding the contents of the `\texttt{island}' column and including them as new features, and \texttt{X\_2} by dropping the column entirely. The relevant lines of code are given in Listing \ref{errorfix}.
+
+	\begin{lstlisting}[caption={Fix for the error}, label=errorfix]
+X_ = df_filtered.drop(['species', 'sex', 'class_encoded'], axis=1)
+
+# Form X_1 by one-hot encoding the island names and including them as new features
+ohe = OneHotEncoder(sparse_output=False, drop='first', handle_unknown='ignore')
+islands_encoded = ohe.fit_transform(X_[['island']])
+X_1 = pd.concat(
+    [
+        X_.drop('island', axis=1).reset_index(drop=True),
+        pd.DataFrame(islands_encoded, columns=ohe.get_feature_names_out(['island']))
+    ], axis=1
+)
+
+# Form X_2 by simply dropping the 'island' column
+X_2 = X_.drop(['island'], axis=1)
+	\end{lstlisting}
+
+	We then run the code given in Listing 2 to train the logistic regression model with both \texttt{X\_1} and \texttt{X\_2}. The outputs generated by each one respectively, are as follows:
+	\begin{verbatim}
+Accuracy : 0.5813953488372093
+[[ 2.75836572e-03 -8.48924277e-05  4.43272550e-04 -2.85530563e-04
+   1.84666104e-04 -1.04725548e-04]] [-8.62161382e-06]
+
+Accuracy : 0.5813953488372093
+[[ 2.76291513e-03 -8.24983988e-05  4.82711005e-04 -2.87644233e-04]]
+ [-8.35428389e-06]
+\end{verbatim}
+	The same accuracy has been achieved in both cases, and the coefficients for common features in both cases are very similar. We further note that in both cases, the following warning was raised: \texttt{ConvergenceWarning: The max\_iter was reached which means the coef\_ did not converge}.
+	\medskip
+
+	\textbf{Question 03} It is clear that SAGA (Stochastic Average Gradient Ameliorated) has performed poorly on the current dataset, as indicated both by the relatively low accuracy of about $0.58$ on its performance on the data, and the fact that the coefficients did not converge.
+
+	Being a stochastic method, SAGA performs best when the size of the dataset is large, ideally with more than tens of thousands of data points. This is because statistically, the gradient computed using a minibatch of the data points approaches the true gradient only when averaged over sufficiently many samples.
+
+	Hence, the main reason for the poor performance of SAGA on our specific dataset is its size. Our dataset consists only of 214 data points---too few for SAGA to perform optimally.
+	
+	More specifically, we attribute the poor performance of SAGA to the following issues that may arise due to a dataset of this scale:
+	\begin{itemize}[noitemsep]
+		\item the gradient computation has a high tendency to be noisy
+		\item a lot more iterations will be needed in order for any convergence to occur, as indicated by the \texttt{ConvergenceWarning}\item the overhead associated with each iteration is not ``offset" by a fewer number of iterations, as is usually the case with larger datasets
+		\item sparsity?
+	\end{itemize}
+	\medskip
+	
+	\textbf{Question 04} The same code snippet in Listing 2 given was run using the `\texttt{liblinear}' solver in place of `\texttt{saga}' solver with training and test sets constructed using both \texttt{X\_1} and \texttt{X\_2} as described above, yielding respectively the following outputs;
+	\begin{verbatim}
+Accuracy : 1.0
+[[ 1.51189823 -1.38940877 -0.14156163 -0.00378048  0.72408487 -0.5530247 ]]
+ [-0.07450833]
+
+Accuracy : 1.0
+[[ 1.59665154 -1.42501103 -0.15238046 -0.003951  ]] [-0.0755452]
+\end{verbatim}
+	In each case, an accuracy of $1.0$ is reported.
+	\medskip
 
 	\textbf{Question 05} Why liblinear better
-	\newline
+	\medskip
 
 	\textbf{Question 06} Sagasolver accuracy
-	\newline
+	\medskip
 
 	\textbf{Question 07} Sagasolver with feature scaling
-	\newline
+	\medskip
 
 	\textbf{Question 08} Categorical
+	\medskip
 
 	\section{First and Second Order Methods for Logistic Regression}
 
 	\textbf{Question 02} Method to initialize weights
-	\newline
+	\medskip
 
 	\textbf{Question 03} Loss function
-	\newline
+	\medskip
 
 	\textbf{Question 04} Newton's Method
-	\newline
+	\medskip
 
 	\textbf{Question 05} Plots
-	\newline
+	\medskip
 
 	\textbf{Question 06} Iterations
-	\newline
+	\medskip
 
 	\textbf{Question 07} Convergence
 \end{document}
