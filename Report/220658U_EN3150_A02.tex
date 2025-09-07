@@ -126,8 +126,18 @@
 	Scheme 2 is obviously not suitable, as it amplifies the loss from outliers over inliers; minimizing such a function would require the error due to outliers to be significantly reduced, causing more slanted line to be preferred, as described in the previous problem.
 	\medskip
 	
-	\textbf{Question 03} In this case, the prediction to be made is a discrete value rather than a continuous value. Linear regression is more suited for predicting continuously varying values.
-	\medskip
+	\textbf{Question 03} In this case, the prediction to be made is of a categorical nature, i.e., a probability distribution over several possible classes, rather than a single continuous value.
+	
+	In linear regression, we try to fit a continuous linear model to a given set of data points. In doing so, we make the following assumptions:
+	\begin{itemize}[noitemsep]
+		\item the error between an actual data point and the corresponding prediction is normally distributed
+		\item the data points vary continuously
+	\end{itemize}
+	However, in the case of categorical data, the variation of data points tends to be more discrete in nature, and the error between continuous-valued predictions and the data points is no longer normally distributed.
+
+	More specifically, if each voxel is treated as a feature, we expect the data matrix $\mathbf{X}$ to have almost linearly dependent rows/columns, as we expect a high correlation between the voxels due to spatial smoothness in the images. This would lead to instability in the computation of $\left(\mathbf{X}^\top\mathbf{X}\right)^{-1}$ required for the ordinary least squares weights.
+
+	On a final note, linear regression performs best when there are fewer features than data points for training. In our case, we expect the input images (data points) to consist of large numbers of voxels (features), but that there would be fewer such images than voxels. This might also lead to unstable coefficients, and sometimes overfitting, in the absence of regularization.
 
 	\textbf{Question 05}
 	\medskip
@@ -211,10 +221,14 @@ Accuracy : 1.0
 	In each case, an accuracy of $1.0$ is reported.
 	\medskip
 
-	\textbf{Question 05} Why liblinear better
+	\textbf{Question 05} `\texttt{liblinear}' is a coordinate-descent method which uses all data points to compute the partial derivative with respect to a single coefficient at a time, and updates it over a number of iterations. Hence, it performs better on smaller datasets, with several hundreds of, or a few thousand data points, such as in our case.
+
+	As such, `\texttt{liblinear}' does not incur as much overhead per iteration as a stochastic method such as SAGA. Thus, when the number of data points is small, it will converge faster than a stochastic method, with lesser memory and resource usage. Therefore, `\texttt{liblinear}' outperforms SAGA on our current dataset.
 	\medskip
 
-	\textbf{Question 06} Sagasolver accuracy
+	\textbf{Question 06} The \texttt{random\_state} parameter passed to a \texttt{LogisticRegression} instance from \texttt{sklearn} controls how the coefficients will be initialized, and in the case of a stochastic method, how data points will be shuffled and selected randomly for iterations.
+
+	Hence, performing different runs with different seed values for \texttt{random\_state} is expected to give different results and different accuracies, as each value would result in different coefficient initializations, and different minbatches of data points being used for updates.
 	\medskip
 
 	\textbf{Question 07} Sagasolver with feature scaling
