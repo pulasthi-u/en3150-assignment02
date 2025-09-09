@@ -258,10 +258,34 @@ Accuracy with liblinear : 0.9767441860465116
 
 	\section{First and Second Order Methods for Logistic Regression}
 
-	\textbf{Question 02} We initialize weights by sampling randomly from a normal distribution.
+	\textbf{Question 02} We simply initialize the weights to zero.
+	
+	The binary cross entropy loss is a convex function. Hence, with a suitable learning rate, we can guarantee convergence to the global optimum, irrespective of the initial weights chosen.
+	
+	With neither prior information about the nature of the weights, nor any constraints placed on the initial weights by the nature of the loss function, we have no reason to prefer any specific initialization over another.
+	
+	Therefore, for simplicity, we simply initialize the weights to zeros in both cases.
 	\medskip
 
-	\textbf{Question 03} Loss function
+	\textbf{Question 03} We use the binary cross entropy loss; \[
+		\text{BCE}\left(\mathbf{y}, \hat{\mathbf{y}}\right)
+		=
+		-\sum_{i = 1}^N
+			y_i \log\left( \hat{y}_i \right)
+			+
+			\left( 1 - y_i \right) \log\left( 1 - \hat{y}_i \right)
+		=
+		-\mathbf{y}^\top \log\left( \hat{\mathbf{y}} \right)
+		-\left(\mathbf{1} - \mathbf{y}\right)^\top \log\left( \mathbf{1} - \hat{\mathbf{y}} \right),
+	\]
+	where $\mathbf{y}_{N \times 1}$ and $\hat{\mathbf{y}}_{N \times 1}$ contain respectively the actual class labels and the predicted probabilities that a data point belongs to the positive class, and $\mathbf{1}_{N \times 1}$ is a vector of all $1$s.
+
+	We choose it mainly for the following reasons:
+	\begin{itemize}[noitemsep]
+		\item it follows naturally from the expression for the likelihood of observing the data points given the predicted probabilites, and hence has a probabilistic foundation
+		\item it penalizes incorrect predictions more heavily
+		\item it is convex
+	\end{itemize}
 	\medskip
 
 	\textbf{Question 04} The implementation is given in Listing .
@@ -272,7 +296,10 @@ Accuracy with liblinear : 0.9767441860465116
 	Clearly, in both cases, the loss is decreasing with the number of iterations, indicating that the algorithm is indeed seeking an optimal set of weights. However, the loss decreases far more slowly with batch gradient descent, when compared with Newton's Method.
 	\medskip
 
-	\textbf{Question 06} Iterations
+	\textbf{Question 06} The following stopping criteria may be used:
+	\begin{itemize}
+		\item 
+	\end{itemize}
 	\medskip
 
 	\textbf{Question 07} Convergence
