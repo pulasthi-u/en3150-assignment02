@@ -262,7 +262,7 @@ Accuracy with liblinear : 0.9767441860465116
 
 	\begin{figure}[H]
 		\centering
-		\includegraphics[width=0.8\linewidth]{images/error.png}
+		\includegraphics[width=0.8\linewidth]{images/q3_1.png}
 		\label{q3_1}
 		\caption{Data generated}
 	\end{figure}
@@ -300,12 +300,12 @@ Accuracy with liblinear : 0.9767441860465116
 	\textbf{Question 04} The implementation is given in Listing .
 	\medskip
 
-	\textbf{Question 05} The required plot is given in Figure \ref{q3_5}.
+	\textbf{Question 05} The required plot is given in Figure \ref{q3_5_1}.
 
 	\begin{figure}[H]
 		\centering
-		\includegraphics[width=0.8\linewidth]{images/error.png}
-		\label{q3_5}
+		\includegraphics[width=0.8\linewidth]{images/q3_5_1.png}
+		\label{q3_5_1}
 		\caption{Loss vs iteration count with batch gradient descent and Newton's Method}
 	\end{figure}
 	
@@ -318,8 +318,16 @@ Accuracy with liblinear : 0.9767441860465116
 	For example, although the gradient in some direction $a$ may be the steepest compared to another direction $b$, it may be the case that traversing further along $b$ leads to a path of much steeper descent towards a minimum---a path that would not have been discovered had the exploration been done in the direction of $a$.
 
 	We note however that Newton's Method comes at the increased computational cost of computing and inverting the Hessian of the loss function, and is therefore unsuitable for complicated, high-dimensional functions.
-	\medskip
 
+	Figure \ref{q3_5_2} shows the decision boundaries learned after $20$ iterations of batch gradient descent and Newton's Method, for a threshold value of $0.5$, i.e., classification based on whether $\sigma\left( \mathbf{w}^\top \mathbf{x} \right) \gtrless 0.5$.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{images/q3_5_2.png}
+		\label{q3_5_2}
+		\caption{Decision boundaries learned}
+	\end{figure}
+	
 	\textbf{Question 06} The following stopping criteria may be used:
 	\begin{itemize}[noitemsep]
 		\item a specified maximum number of iterations is reached
@@ -334,7 +342,7 @@ Accuracy with liblinear : 0.9767441860465116
 
 	\begin{figure}[H]
 		\centering
-		\includegraphics[width=0.8\linewidth]{images/error.png}
+		\includegraphics[width=0.8\linewidth]{images/q3_7_1.png}
 		\label{q3_7_1}
 		\caption{Data generated with different centers}
 	\end{figure}
@@ -345,7 +353,7 @@ Accuracy with liblinear : 0.9767441860465116
 
 	\begin{figure}[H]
 		\centering
-		\includegraphics[width=0.8\linewidth]{images/error.png}
+		\includegraphics[width=0.8\linewidth]{images/q3_7_2.png}
 		\label{q3_7_2}
 		\caption{Loss against iteration count with different learning rates}
 	\end{figure}
