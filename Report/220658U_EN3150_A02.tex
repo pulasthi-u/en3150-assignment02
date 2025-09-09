@@ -76,12 +76,13 @@
 	\small{Progress on \href{https://github.com/pulasthi-u/en3150-assignment02}{GitHub \extlink}}
 }
 
-\date{20 August 2025}
+\date{9 September 2025}
 
 \allowdisplaybreaks
 \setlength{\parindent}{0pt}
 
 \begin{document}
+	\setcounter{lstlisting}{3}
 	\maketitle
 
 	\section{Linear Regression}
@@ -139,8 +140,17 @@
 
 	On a final note, linear regression performs best when there are fewer features than data points for training. In our case, we expect the input images (data points) to consist of large numbers of voxels (features), but that there would be fewer such images than voxels. This might also lead to unstable coefficients, and sometimes overfitting, in the absence of regularization.
 
-	\textbf{Question 05}
-	\medskip
+	\textbf{Question 05} Group LASSO.
+
+	In this problem, we have already identified certain regions of the brain as possible predictors of the relevant tasks, and wish to know which region is most predictive of a given task.
+
+	We would like to encourage sparsity in our model because we expect the voxels to be highly correlated as previously mentioned; not all voxels may carry information important enough to affect the decision significantly.
+
+	A researcher who studies the brain is more likely to be interested in the activity of an entire region of the brain, rather than in a few sparsely distributed spots. This is also a reasonable biological expectation due to the spatial smoothness of the brain.
+
+	With standard LASSO regularization, although sparsity will be encouraged, the interrelationship between voxels is not taken into consideration at all. Hence, it may set the weights for seemingly randomly chosen voxels from around the picture to $0$, and the others to non-zero values. It might end up picking arbitrary voxels from the region of the brain that is actually responsible for some given task, when in fact, the entire region is responsible. Such results are usually not well interpretable and not informative enough.
+
+	Instead, with group LASSO, sparsity is encouraged among \textit{groups} of voxels. Rather than forcing independently chosen weights towards zero, group LASSO forces entire groups of related weights to zero, leaving the other groups at non-zero values. Now, if a certain region is predicted as suggestive of some task, then all voxels associated with that region will be assigned similar weights. This leads to more interpretable and desirable results.
 
 	\section{Logistic Regression}
 
@@ -152,6 +162,13 @@ ValueError                                Traceback (most recent call last)
 ----> logreg.fit(X_train, y_train)
 
 ValueError: could not convert string to float: `Adelie'\end{verbatim}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{images/error.png}
+		\label{error_scrnsht}
+		\caption{Screenshot of the error encountered}
+	\end{figure}
 
 	The error indicates that not all data items given to \texttt{logreg.train} could be converted to the \texttt{float} data type. Clearly, all data \textit{must} be \textit{numeric} in order to enable the computation of weights and gradients required for logistic regression.
 
@@ -163,24 +180,7 @@ ValueError: could not convert string to float: `Adelie'\end{verbatim}
 
 	It is unlikely that the sex of a penguin has any influence on its species, so we will drop this feature entirely. A penguin's habitat (`\texttt{island}'), on the other hand, may be considered as influencing its species, as different species may have adaptations for different habitats. Whether or not to include it as a feature then depends on one's exact requirements. For the purposes of this problem, we will look at both options.
 	
-	Hence, we resolve the error as follows. We drop the `\texttt{species}' and `\texttt{sex}' columns entirely from `\texttt{df\_filtered}' to form \texttt{X\_}. Then, from \texttt{X\_} we form \texttt{X\_1} by one-hot encoding the contents of the `\texttt{island}' column and including them as new features, and \texttt{X\_2} by dropping the column entirely. The relevant lines of code are given in Listing \ref{errorfix}.
-
-	\begin{lstlisting}[caption={Fix for the error}, label=errorfix]
-X_ = df_filtered.drop(['species', 'sex', 'class_encoded'], axis=1)
-
-# Form X_1 by one-hot encoding the island names and including them as new features
-ohe = OneHotEncoder(sparse_output=False, drop='first', handle_unknown='ignore')
-islands_encoded = ohe.fit_transform(X_[['island']])
-X_1 = pd.concat(
-    [
-        X_.drop('island', axis=1).reset_index(drop=True),
-        pd.DataFrame(islands_encoded, columns=ohe.get_feature_names_out(['island']))
-    ], axis=1
-)
-
-# Form X_2 by simply dropping the 'island' column
-X_2 = X_.drop(['island'], axis=1)
-	\end{lstlisting}
+	Hence, we resolve the error as follows. We drop the `\texttt{species}' and `\texttt{sex}' columns entirely from `\texttt{df\_filtered}' to form \texttt{X\_}. Then, from \texttt{X\_} we form \texttt{X\_1} by one-hot encoding the contents of the `\texttt{island}' column and including them as new features, and \texttt{X\_2} by dropping the column entirely. The relevant lines of code are given in Listing \ref{errorfix} in Appendix \ref{code}.
 
 	We then run the code given in Listing 2 to train the logistic regression model with both \texttt{X\_1} and \texttt{X\_2}. The outputs generated by each one respectively, are as follows:
 	\begin{verbatim}
@@ -192,8 +192,7 @@ Accuracy : 0.5813953488372093
 [[ 2.76291513e-03 -8.24983988e-05  4.82711005e-04 -2.87644233e-04]]
  [-8.35428389e-06]
 \end{verbatim}
-	The same accuracy has been achieved in both cases, and the coefficients for common features in both cases are very similar. We further note that in both cases, the following warning was raised: \texttt{ConvergenceWarning: The max\_iter was reached which means the coef\_ did not converge}.
-	\medskip
+	The same accuracy has been achieved in both cases, and the coefficients for common features in both cases are very similar. We further note that in both cases, the following warning was raised: \texttt{ConvergenceWarning: The max\_iter was reached which means the coef\_ did not converge}.\medskip
 
 	\textbf{Question 03} It is clear that SAGA (Stochastic Average Gradient Ameliorated) has performed poorly on the current dataset, as indicated both by the relatively low accuracy of about $0.581$ on its performance on the data, and the fact that the coefficients did not converge.
 
@@ -205,8 +204,9 @@ Accuracy : 0.5813953488372093
 	\begin{itemize}[noitemsep]
 		\item the gradient computation has a high tendency to be noisy
 		\item a lot more iterations will be needed in order for any convergence to occur, as indicated by the \texttt{ConvergenceWarning}\item the overhead associated with each iteration is not ``offset" by a fewer number of iterations, as is usually the case with larger datasets
-		\item sparsity?
 	\end{itemize}
+
+	On an additional note, the fact that our dataset is dense, with almost every feature of every data point taking non-zero values, adds to the computational overhead associated with SAGA. SAGA performs best on large, sparse data.
 	\medskip
 	
 	\textbf{Question 04} The same code snippet in Listing 2 given was run using the `\texttt{liblinear}' solver in place of `\texttt{saga}' solver with training and test sets constructed using both \texttt{X\_1} and \texttt{X\_2} as described above, yielding respectively the following outputs;
@@ -272,8 +272,12 @@ Accuracy with liblinear : 0.9767441860465116
 	The binary cross entropy loss is a convex function. Hence, with a suitable learning rate, we can guarantee convergence to the global optimum, irrespective of the initial weights chosen.
 	
 	With neither prior information about the nature of the weights, nor any constraints placed on the initial weights by the nature of the loss function, we have no reason to prefer any specific initialization over another.
+
+	We also acknowledge another commonly used alternative; initializing the weights with values sampled from a normal distribution. This would introduce some slight asymmetry and noise to the initial values, which might be helpful against getting stuck at plateaus, etc. 
 	
-	Therefore, for simplicity, we simply initialize the weights to zeros in both cases.
+	However, for simplicity, we simply initialize the weights to zeros in both cases.
+
+	Our implementation of batch gradient descent is given in Listing \ref{bgd} in Appendix \ref{code}.
 	\medskip
 
 	\textbf{Question 03} We use the binary cross entropy loss; \[
@@ -297,7 +301,7 @@ Accuracy with liblinear : 0.9767441860465116
 	\end{itemize}
 	\medskip
 
-	\textbf{Question 04} The implementation is given in Listing .
+	\textbf{Question 04} The implementation is given in Listing \ref{nm} in Appendix \ref{code}.
 	\medskip
 
 	\textbf{Question 05} The required plot is given in Figure \ref{q3_5_1}.
@@ -392,4 +396,98 @@ Accuracy with liblinear : 0.9767441860465116
 	As a result, as long as data points from Class $0$ still exist, \textit{any} model will \textit{always} make misclassifications. This has the effect of imposing a strict positive lower bound on the loss achievable; no loss function can be minimized beyond this bound. 
 	
 	More concretely, in the case of batch gradient descent, the loss function at such points will remain more or less constant---almost independent of the parameters we differentiate with respect to, leading to almost $0$ gradients, and hence a stagnation of the loss.
+
+	\appendix
+	\section{Code Snippets}
+	\label{code}
+
+	\subsection{Logistic Regression}
+
+	\subsubsection{Question 02}
+
+	\begin{lstlisting}[caption={Fix for the error}, label=errorfix]
+X_ = df_filtered.drop(['species', 'sex', 'class_encoded'], axis=1)
+
+# Form X_1 by one-hot encoding the island names and including them as new features
+ohe = OneHotEncoder(sparse_output=False, drop='first', handle_unknown='ignore')
+islands_encoded = ohe.fit_transform(X_[['island']])
+X_1 = pd.concat(
+    [
+        X_.drop('island', axis=1).reset_index(drop=True),
+        pd.DataFrame(islands_encoded, columns=ohe.get_feature_names_out(['island']))
+    ], axis=1
+)
+
+# Form X_2 by simply dropping the 'island' column
+X_2 = X_.drop(['island'], axis=1)
+	\end{lstlisting}
+
+	\subsection{First and Second Order Methods for Logistic Regression}
+
+	\subsubsection{Helper Functions}
+	\begin{lstlisting}[caption={Functions to compute BCE and the sigmoid}]
+# Define a function to compute the binary cross entropy
+def BCE(y, y_hat):
+    return -(y.T @ np.log(y_hat + 1e-12) + (1 - y).T @ np.log(1 - y_hat + 1e-12))[0]
+
+# Define the sigmoid function
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+	\end{lstlisting}
+
+	\subsubsection{Question 02}
+	\begin{lstlisting}[caption={Batch Gradient Descent}, label=bgd]
+def BGD(X, y, lr, max_iter=20):
+    # Initialize weights
+    np.random.seed(1)
+    w_BGD = np.zeros((X.shape[1], 1))
+
+    # Initialize array to store loss over time
+    BGD_losses = []
+
+    for i in range(max_iter):
+        # Make predictions
+        y_hat = sigmoid(X @ w_BGD)
+
+        # Compute the gradient
+        grad = (X.T @ (y - y_hat)) / N
+
+        # Update w
+        w_BGD += lr * grad
+
+        # Compute the loss
+        BGD_losses.append(BCE(y, y_hat))
+    
+    return w_BGD, BGD_losses		
+	\end{lstlisting}
+
+	\subsubsection{Question 04}
+	\begin{lstlisting}[caption={Newton's Method}, label=nm]
+def NM(X, y, lr, max_iter=20):
+    # Initialize weights
+    np.random.seed(1)
+    w_NM = np.zeros((X.shape[1], 1))
+
+    # Initialize array to store loss over time
+    NM_losses = []
+
+    for i in range(20):
+        y_hat = sigmoid(X @ w_NM)
+        
+        # Compute the gradient
+        g = (X.T @ (y_hat - y)) / N
+
+        # Compute the Hessian
+        S = np.diagflat(y_hat * (1 - y_hat))
+        H = (X.T @ S @ X) / N
+
+        # Find the step to take and update w
+        step = np.linalg.solve(H, g)
+        w_NM -= lr * step
+
+        # Compute the loss
+        NM_losses.append(BCE(y, y_hat))
+    
+    return w_NM, NM_losses
+	\end{lstlisting}
 \end{document}
