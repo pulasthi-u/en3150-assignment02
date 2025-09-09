@@ -258,6 +258,15 @@ Accuracy with liblinear : 0.9767441860465116
 
 	\section{First and Second Order Methods for Logistic Regression}
 
+	\textbf{Question 01} Figure \ref{q3_1} shows a plot of the synthetically generated data.
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{images/error.png}
+		\label{q3_1}
+		\caption{Data generated}
+	\end{figure}
+
 	\textbf{Question 02} We simply initialize the weights to zero.
 	
 	The binary cross entropy loss is a convex function. Hence, with a suitable learning rate, we can guarantee convergence to the global optimum, irrespective of the initial weights chosen.
@@ -291,16 +300,88 @@ Accuracy with liblinear : 0.9767441860465116
 	\textbf{Question 04} The implementation is given in Listing .
 	\medskip
 
-	\textbf{Question 05} The variation of the binary cross entropy loss over all the data points with the number of iterations with both batch gradient descent and Newton's Method is illustrated in Figure .
+	\textbf{Question 05} The required plot is given in Figure \ref{q3_5}.
 
-	Clearly, in both cases, the loss is decreasing with the number of iterations, indicating that the algorithm is indeed seeking an optimal set of weights. However, the loss decreases far more slowly with batch gradient descent, when compared with Newton's Method.
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{images/error.png}
+		\label{q3_5}
+		\caption{Loss vs iteration count with batch gradient descent and Newton's Method}
+	\end{figure}
+	
+	Clearly, in both cases, the loss can be seen to be decreasing with the number of iterations, indicating that the algorithm is indeed seeking an optimal set of weights. However, the loss decreases far more slowly with batch gradient descent, when compared with Newton's Method.
+
+	Newton's Method is derived from a quadratic approximation to the loss function, and hence convergences quadratically, whereas batch gradient descent is derived from a linear approximation and therefore converges only linearly, more slowly than Newton's Method.
+
+	Gradient descent looks only at the slope of the function at a point, and does not take into account the variation of the slope within the its neighborhood. Newton's Method, on the other hand, uses higher-order derivatives in the Hessian as well, in deciding the best direction to take a step in.
+
+	For example, although the gradient in some direction $a$ may be the steepest compared to another direction $b$, it may be the case that traversing further along $b$ leads to a path of much steeper descent towards a minimum---a path that would not have been discovered had the exploration been done in the direction of $a$.
+
+	We note however that Newton's Method comes at the increased computational cost of computing and inverting the Hessian of the loss function, and is therefore unsuitable for complicated, high-dimensional functions.
 	\medskip
 
 	\textbf{Question 06} The following stopping criteria may be used:
-	\begin{itemize}
-		\item 
+	\begin{itemize}[noitemsep]
+		\item a specified maximum number of iterations is reached
+		\item the loss function is below a certain threshold
+		\item the percentage reduction of the loss function is less than a certain threshold
+		\item the percentage change in the norm of the weights vector is less than a certain threshold
+		\item whichever of the above happens first
 	\end{itemize}
 	\medskip
 
-	\textbf{Question 07} Convergence
+	\textbf{Question 07} The newly generated data points appear as shown in Figure \ref{q3_7_1}.
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{images/error.png}
+		\label{q3_7_1}
+		\caption{Data generated with different centers}
+	\end{figure}
+
+	Observe that in this case there is no clear separation between the classes. There is significant overlap between the two classes, and there is no clear boundary dividing them.
+
+	We ran batch gradient descent on this set of data with various values for the learning rate. The variation of the loss with several chosen values for the learning rate is illustrated in Figure \ref{q3_7_2}.
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\linewidth]{images/error.png}
+		\label{q3_7_2}
+		\caption{Loss against iteration count with different learning rates}
+	\end{figure}
+
+	It can be seen that for all choices of the learning rate, the loss seems to saturate just below $1000$, and does not seem to decrease to zero.
+
+	To see why this happens, note that from how the problem is set up, we are trying to discover a linear separation/boundary between the two classes. However, as obviously visible in Figure \ref{q3_7_1}, no single straight line can separate the two classes; any straight line chosen as a boundary will always lead to misclassifications.
+
+	From a Bayesian standpoint, we classify a data point $\mathbf{x}$ as belonging to Class $y=1$, if the posterior probability \[
+		p \left( y = 1 \vert \mathbf{x} \right)
+		=
+		\dfrac{
+			p \left( \mathbf{x} \vert y = 1 \right) p \left( y = 1 \right)
+		}{
+			p \left( \mathbf{x} \vert y = 1 \right) p \left( y = 1 \right)
+			+
+			p \left( \mathbf{x} \vert y = 0 \right) p \left( y = 0 \right)
+		}
+		> p_\text{thresh},
+	\]
+	where $p_\text{thresh}$ is some threshold probability.
+
+	However, in the case of overlapping classes, $p \left( \mathbf{x} \vert y = 1 \right)$ and $p \left( \mathbf{x} \vert y = 0 \right)$ are both of comparable magnitude; specifying the class does not make it more or less likely to see $\mathbf{x}$ within that class, as the classes overlap and $\mathbf{x}$ is almost equally likely to be seen in either class.
+
+	In such a case, \[
+		p \left( y = 1 \vert \mathbf{x} \right)
+		\approx
+		\dfrac{
+			p \left( y = 1 \right)
+		}{
+			p \left( y = 1 \right) + p \left( y = 0 \right)
+		}
+		= p \left( y = 1 \right),
+	\] i.e., the data point will have little to no effect at all on the prediction being made. Given some arbitrary $\mathbf{x}$ then, the model would simply predict it as belonging to Class $1$ with the same probability that an observation from Class $1$ is made in general.
+	
+	As a result, as long as data points from Class $0$ still exist, \textit{any} model will \textit{always} make misclassifications. This has the effect of imposing a strict positive lower bound on the loss achievable; no loss function can be minimized beyond this bound. 
+	
+	More concretely, in the case of batch gradient descent, the loss function at such points will remain more or less constant---almost independent of the parameters we differentiate with respect to, leading to almost $0$ gradients, and hence a stagnation of the loss.
 \end{document}
