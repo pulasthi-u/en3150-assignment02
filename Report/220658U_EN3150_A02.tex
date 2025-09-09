@@ -195,7 +195,7 @@ Accuracy : 0.5813953488372093
 	The same accuracy has been achieved in both cases, and the coefficients for common features in both cases are very similar. We further note that in both cases, the following warning was raised: \texttt{ConvergenceWarning: The max\_iter was reached which means the coef\_ did not converge}.
 	\medskip
 
-	\textbf{Question 03} It is clear that SAGA (Stochastic Average Gradient Ameliorated) has performed poorly on the current dataset, as indicated both by the relatively low accuracy of about $0.58$ on its performance on the data, and the fact that the coefficients did not converge.
+	\textbf{Question 03} It is clear that SAGA (Stochastic Average Gradient Ameliorated) has performed poorly on the current dataset, as indicated both by the relatively low accuracy of about $0.581$ on its performance on the data, and the fact that the coefficients did not converge.
 
 	Being a stochastic method, SAGA performs best when the size of the dataset is large, ideally with more than tens of thousands of data points. This is because statistically, the gradient computed using a minibatch of the data points approaches the true gradient only when averaged over sufficiently many samples.
 
@@ -231,24 +231,45 @@ Accuracy : 1.0
 	Hence, performing different runs with different seed values for \texttt{random\_state} is expected to give different results and different accuracies, as each value would result in different coefficient initializations, and different minbatches of data points being used for updates.
 	\medskip
 
-	\textbf{Question 07} Sagasolver with feature scaling
+	\textbf{Question 07} We implement standard scaling for the feature values and re-ran the logistic regression model with both `\texttt{liblinear}' and SAGA solvers. The results obtained are as follows:
+	\begin{verbatim}
+Accuracy with saga : 0.9767441860465116
+[[ 3.90443923 -0.82356688  0.18543687 -0.73559796]] [-1.96731639]
+
+Accuracy with liblinear : 0.9767441860465116
+[[ 3.77819685 -0.75341497  0.17248526 -0.71597049]] [-1.72205563]
+\end{verbatim}
+	Equal accuracies of around $0.976$ are reported in both cases; a significant improvement over the previous value of $0.581$ with SAGA, but a marginal decrease compared to the previous value of $1.0$ with `\texttt{liblinear}'. We also note that both models have led to comparable coefficients.
+
+	To see why this leads to a performance increase with SAGA, we note that standard scaling the features of the data points transforms them to be centered around zero, and restricts their variation along comparable scales. With stochastic methods such as SAGA, having all features on comparable scales helps stabilize gradient computation. Had this not been done, a randomly chosen minibatch may have features of a vastly different magnitude range than other batches, and therefore sudden variations/magnitude changes in the gradient, leading to uneven and haphazard steps being taken, slowing down convergence.
+
+	Further, scaling ensures that the model learns to compare relative magnitudes \textit{across} features rather than be dominated by features that vary on very large scales, ignoring other features.
+
+	In fact, the reason for the slight decrease in accuracy with `\texttt{liblinear}' with scaling may be due to the model starting to factor in other features more significantly; the previous accuracy of $1.0$ may have been due to some level of overfitting to the data, and it is possible that the model is now starting to exchange some of the lower bias it had previously achieved with a lower variance now, in an attempt to generalize better to unseen data.
 	\medskip
 
-	\textbf{Question 08} Categorical
-	\medskip
+	\textbf{Question 08} The stated approach is incorrect.
+	
+	Label-encoding a feature whose possible values are colors (with more than two colors) would imply some \textit{ordering} and relative \textit{weighting} among the colors, and is therefore unsuitable, unless such an ordering or weighting actually does exist (e.g., `green' - `least risk', `red' - `highest risk'/`twice as high a risk as green' etc.).
+	
+	Feature-scaling tends to preserve such an ordering and weighting. It would not address the problem of how exactly to assign labels to the colors.
+
+	A more suitable approach would be to use one-hot encoding. Here, we treat each color as a binary-valued feature, and append them as extra features to the existing features. Doing so we avoid the implication of any form of ordering or weighting. Further, the values of these features will always be either $0$ or $1$, and therefore vary on comparable scales among each other.
 
 	\section{First and Second Order Methods for Logistic Regression}
 
-	\textbf{Question 02} Method to initialize weights
+	\textbf{Question 02} We initialize weights by sampling randomly from a normal distribution.
 	\medskip
 
 	\textbf{Question 03} Loss function
 	\medskip
 
-	\textbf{Question 04} Newton's Method
+	\textbf{Question 04} The implementation is given in Listing .
 	\medskip
 
-	\textbf{Question 05} Plots
+	\textbf{Question 05} The variation of the binary cross entropy loss over all the data points with the number of iterations with both batch gradient descent and Newton's Method is illustrated in Figure .
+
+	Clearly, in both cases, the loss is decreasing with the number of iterations, indicating that the algorithm is indeed seeking an optimal set of weights. However, the loss decreases far more slowly with batch gradient descent, when compared with Newton's Method.
 	\medskip
 
 	\textbf{Question 06} Iterations
